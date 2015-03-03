@@ -1,0 +1,31 @@
+
+
+Quiz: {{ quiz.name }} <br><br>
+
+<form action="{% url 'takeQuiz' quiz.id %}" method="post" >
+{% csrf_token %}
+{% if page.question_set %}
+   <ul>
+   {% for question in page.question_set.all %}
+      <li>{{ question }}</li>
+   {% endfor %}
+   </ul>
+{% else %}
+   <p> There are no questions on this page </p>
+{% endif %}
+
+<br>
+{% if not_all_questions_answered %}
+   <p id="red"> Please answer all the questions </p><br>
+{% endif %}
+
+{% if has_previous_page %}
+   <input type="submit" name="previous" value="Previous Page"/>
+{% endif %}
+Page {{ page.sequence_number }}
+{% if has_next_page %}
+   <input type="submit" name="next" value="Next Page"/>
+{% endif %}
+</form>
+<br><br>
+<a href="{% url 'home' %}"> Go back to quizes </a>

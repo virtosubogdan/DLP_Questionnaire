@@ -1,0 +1,21 @@
+{% load staticfiles %}
+
+<link rel="stylesheet" type="text/css" hef="{% static 'quizes/style.css' %}" />
+
+
+{% if quizes %}
+   <ul>
+   {% for quiz in quizes %}
+      <li><a href="{% url 'takeQuiz' quiz.id %}">
+      	     {{ quiz.name }} <br> {{ quiz.description }}
+	     </a></li>
+   {% endfor %}
+   </ul>
+{% else %}
+   <p>No quizes are available</p>
+{% endif %}
+
+{% if error %}
+   <p> You already started another quiz </p>
+   {{ error }}
+{% endif %}
