@@ -2,3 +2,5 @@ env
 *~
 *.pyc
 Questionnaire/db.sqlite3
+.idea
+DLP_Questionnaire.iml
