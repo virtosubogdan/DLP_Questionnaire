@@ -9,6 +9,7 @@
       <li><a href="{% url 'takeQuiz' quiz.id %}">
       	     {{ quiz.name }} <br> {{ quiz.description }}
 	     </a></li>
+      <br>
    {% endfor %}
    </ul>
 {% else %}
@@ -16,6 +17,11 @@
 {% endif %}
 
 {% if error %}
-   <p> You already started another quiz </p>
-   {{ error }}
+   {% if error == 'QuizNotFinished' %}
+      <p> You already started another quiz. If you want to start a new quiz click
+      	  <a href="{% url 'startNewQuiz' %}">here</a>, but you will lose all progress on
+	  your current <a href="{% url 'continueQuiz' %}">quiz.</p>
+   {% else %}
+      <p> Something went wrong.</p>
+   {% endif %}
 {% endif %}

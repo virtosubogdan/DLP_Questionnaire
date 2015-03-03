@@ -39,6 +39,9 @@ class TakeQuiz(generic.DetailView):
 #        import ipdb; ipdb.set_trace()
 #        return None
 
+def continue_quiz(request):
+    return take_quiz(request, request.session['current_quiz'])
+
 def take_quiz(request, pk):
     print 'take_quiz', pk
     if 'current_quiz' in request.session:
@@ -89,24 +92,10 @@ def take_quiz(request, pk):
 def save_answers_for_page(page, request):
     pass
 
-def next_page(request):
-    print 'next_page'
-    quiz = get_object_or_404(Quiz, request.session.get(S_QUIZ_ID, DEFAULT_QUIZ_ID))
-    page = get_not_null(quiz.page_set.get(pk = request.session.get(S_PAGE_ID, DEFAULT_PAGE_ID)))
-
-    context = {
-        'quiz' : quiz,
-        'page' :page
-        }
-    return render_to_response('quizes/takeQuiz.html', context, RequestContext(request))
-
-def previous_page(request):
-    print 'previous_page'
-    context = {
-        'quiz' : quiz,
-        'page' :page
-        }
-    return render_to_response('quizes/takeQuiz.html', context, RequestContext(request))
+def start_new_quiz(request):
+    del request.session['current_quiz']
+    del request.session['current_page']
+    return index_view(request)
 
 def get_not_null(obj):
     if not obj:
