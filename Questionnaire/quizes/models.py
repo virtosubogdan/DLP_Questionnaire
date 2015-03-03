@@ -15,7 +15,10 @@ class Quiz(models.Model):
 # TODO may need order
 class Page(models.Model):
     quiz = models.ForeignKey(Quiz)
-    sequence_number = models.IntegerField(default=1, unique=True)
+    sequence_number = models.IntegerField(default=1)
+
+    class Meta:
+        unique_together = ('quiz', 'sequence_number')
 
     def __str__(self):
         return "Quiz "+self.quiz.name+", Page "+ str(self.id) +", nr "+str(self.sequence_number)
