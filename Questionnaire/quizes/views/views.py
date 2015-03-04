@@ -3,6 +3,7 @@ from django.http import Http404
 from django.views import generic
 from django.template import RequestContext
 from django.shortcuts import render_to_response, get_object_or_404
+from itertools import ifilter
 
 from quizes.models import Quiz
 
@@ -58,7 +59,8 @@ def take_quiz(request, pk):
         page = get_not_null(quiz.page_set.get(pk=page_id))
     else:
         page = quiz.get_first_page()
-    #import ipdb; ipdb.set_trace()
+        request.session['answers'] = {}
+    # import ipdb; ipdb.set_trace()
     if 'previous' in request.POST:
         save_answers_for_page(page, request)
         previous_page = page.previous()
@@ -73,16 +75,22 @@ def take_quiz(request, pk):
             current_page = next_page
         else:
             current_page = page
+    elif 'finish' in request.POST:
+        #TODO : implement finish
+        # import ipdb; ipdb.set_trace()
+        return start_new_quiz(request);
     else:
         current_page = page
     request.session['current_page'] = current_page.id;
 
     #import ipdb; ipdb.set_trace();
-    print current_page, current_page.previous(), current_page.next()
-    # import ipdb; ipdb.set_trace();
+    print 'answers', request.session.get('answers',{})
+    print 'pages', current_page, current_page.previous(), current_page.next()
     context = {
         'quiz' : quiz,
-        'page' : current_page,
+        'questions' : prepare_for_render(current_page, request.session.get('answers',{}).
+                                         get(str(current_page.id),{})),
+        'pageNumber' : current_page.sequence_number,
         'not_all_questions_answered' : False,
         'has_previous_page' : not not current_page.previous(),
         'has_next_page' : not not current_page.next()
@@ -90,14 +98,47 @@ def take_quiz(request, pk):
     return render_to_response('quizes/takeQuiz.html', context, RequestContext(request))
 
 def save_answers_for_page(page, request):
-    pass
+    if 'answers' not in request.session:
+        request.session = {}
+    page_answers = request.session['answers'].get(str(page.id),{})
+    for question in page.question_set.all():
+        if question.type == 'Basic':
+            if str(question.id) in request.POST:
+                page_answers[str(question.id)] = [int(request.POST.get(str(question.id)))]
+            else:
+                page_answers[str(question.id)] = []
+        else:
+            prefix = str(question.id) + 'c'
+            page_answers[str(question.id)] = [int(key[len(prefix):])
+                                         for key in request.POST.keys() if key.startswith(prefix)]
+    request.session['answers'][str(page.id)] = page_answers
+    request.session.modified = True
+    print page_answers
+
+def prepare_for_render(page, answers):
+    questions = []
+    print 'prepare',page.id,answers
+    for question in page.question_set.all():
+        choices = []
+        isMultiChoice = question.type == 'Multiple'
+        selected_choices = answers.get(str(question.id),{})
+        for choice in question.choice_set.all():
+            print choice.id, selected_choices
+            choices.append([choice.text, choice.id,
+                            str(question.id)+'c'+str(choice.id) if isMultiChoice else
+                            str(question.id), choice.id in selected_choices])
+        questions.append([question.id, question.text, choices])
+    print questions
+    return questions
 
 def start_new_quiz(request):
     del request.session['current_quiz']
     del request.session['current_page']
+    del request.session['answers']
     return index_view(request)
 
 def get_not_null(obj):
     if not obj:
         raise Http404('Could not find object')
     return obj
+

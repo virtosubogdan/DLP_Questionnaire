@@ -4,10 +4,18 @@ Quiz: {{ quiz.name }} <br><br>
 
 <form action="{% url 'takeQuiz' quiz.id %}" method="post" >
 {% csrf_token %}
-{% if page.question_set %}
+{% if questions %}
    <ul>
-   {% for question in page.question_set.all %}
-      <li>{{ question }}</li>
+   {% for question in questions %}
+      <li>Question {{ question.0 }}: {{ question.1 }}
+      <br>
+      {% for choice in question.2 %}
+         <input type="radio" name="{{ choice.2 }}" value="{{ choice.1 }}"
+	 {% if choice.3 %} checked {% endif %}
+	 />{{ choice.0 }} {{ choice.3 }}<br>
+      {% endfor %}
+      </li>
+      <br>
    {% endfor %}
    </ul>
 {% else %}
@@ -22,9 +30,11 @@ Quiz: {{ quiz.name }} <br><br>
 {% if has_previous_page %}
    <input type="submit" name="previous" value="Previous Page"/>
 {% endif %}
-Page {{ page.sequence_number }}
+Page {{ pageNumber }}
 {% if has_next_page %}
    <input type="submit" name="next" value="Next Page"/>
+{% else %}
+   <input type="submit" name="finish" value="Finish"/>
 {% endif %}
 </form>
 <br><br>
