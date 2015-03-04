@@ -7,7 +7,7 @@ class Quiz(models.Model):
     description = models.CharField(max_length=400)
 
     def __str__(self):
-        return "Question "+self.name;
+        return "Question " + self.name
 
     def get_first_page(self):
         return self.page_set.order_by('sequence_number')[:1][0]
@@ -23,6 +23,7 @@ class Quiz(models.Model):
         else:
             return total/attempts
 
+
 # TODO may need order
 class Page(models.Model):
     quiz = models.ForeignKey(Quiz)
@@ -32,7 +33,7 @@ class Page(models.Model):
         unique_together = ('quiz', 'sequence_number')
 
     def __str__(self):
-        return "Quiz "+self.quiz.name+", Page "+ str(self.id) +", nr "+str(self.sequence_number)
+        return "Quiz " + self.quiz.name + ", Page " + str(self.id) + ", nr " + str(self.sequence_number)
 
     def next(self):
         next_list = Page.objects.filter(quiz=self.quiz).order_by('sequence_number').filter(
@@ -40,12 +41,14 @@ class Page(models.Model):
         if not next_list:
             return None
         return next_list[0]
+
     def previous(self):
         prev_list = Page.objects.filter(quiz=self.quiz).order_by('-sequence_number').filter(
             sequence_number__lt=self.sequence_number)[:1]
         if not prev_list:
             return None
         return prev_list[0]
+
 
 # TODO may need order
 class Question(models.Model):
@@ -55,13 +58,13 @@ class Question(models.Model):
     type = models.CharField(max_length=20)
 
     def __str__(self):
-        return "Question "+ str(self.id)
+        return "Question " + str(self.id)
 
     def evaluate(self, answers):
         is_simple = self.type == 'Basic'
         score = 0
-        improve = (None,[])
-        deteriorate = (None,[])
+        improve = (None, [])
+        deteriorate = (None, [])
         for choice in self.choice_set.all():
             print 'choice', choice.id
             if choice.id in answers:
@@ -76,20 +79,20 @@ class Question(models.Model):
                 print 'improved', improve
                 deteriorate = self.__deteriorate_multi(deteriorate, choice)
         if improve[0] is None or improve[0] == score:
-            improve=None
+            improve = None
         if deteriorate[0] is None or deteriorate[0] == score:
-            deteriorate=None
+            deteriorate = None
         return score, improve, deteriorate
 
     def __deteriorate_multi(self, deteriorate, choice):
         if choice.value < 0:
             if deteriorate[0] is None or deteriorate[0] == 0:
-                return (choice.value,[choice.id])
+                return (choice.value, [choice.id])
             else:
                 deteriorate[1].append(choice.id)
-                return (deteriorate[0]+choice.value,deteriorate[1])
+                return (deteriorate[0] + choice.value, deteriorate[1])
         elif choice.value == 0 and deteriorate[0] is None:
-            return (choice.value,[choice.id])
+            return (choice.value, [choice.id])
         else:
             return deteriorate
 
@@ -97,14 +100,15 @@ class Question(models.Model):
         print 'im', improve
         if choice.value > 0:
             if improve[0] is None or improve[0] == 0:
-                return (choice.value,[choice.id])
+                return (choice.value, [choice.id])
             else:
                 improve[1].append(choice.id)
-                return (improve[0]+choice.value,improve[1])
+                return (improve[0] + choice.value, improve[1])
         elif choice.value == 0 and improve[0] is None:
-            return (choice.value,[choice.id])
+            return (choice.value, [choice.id])
         else:
             return improve
+
 
 class Choice(models.Model):
     question = models.ForeignKey(Question)
@@ -114,10 +118,10 @@ class Choice(models.Model):
     def __str__(self):
         return "Choice "+self.text
 
+
 class Result(models.Model):
     quiz = models.ForeignKey(Quiz)
     score = models.IntegerField(default=0)
 
     def __str__(self):
-        return "Result "+str(self.id)+" Score:"+ str(self.score)
-
+        return "Result " + str(self.id) + " Score:" + str(self.score)

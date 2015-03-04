@@ -12,6 +12,7 @@ S_PAGE_ID = 'current_page'
 DEFAULT_QUIZ_ID = 1
 DEFAULT_PAGE_ID = 1
 
+
 # BV_Q: how to use ListView instead of index_view ?
 class IndexView(generic.ListView):
     template_name = 'quizes/index.html'
@@ -20,12 +21,14 @@ class IndexView(generic.ListView):
     def get_queryset(self):
         return Quiz.objects.all()
 
+
 def index_view(request, error=None):
     context = {
-        'quizes' : Quiz.objects.all(),
-        'error' : error
+        'quizes': Quiz.objects.all(),
+        'error': error
     }
     return render_to_response('quizes/index.html', context, RequestContext(request))
+
 
 # BV_Q: how to use DetailView instead of take_quiz ?
 class TakeQuiz(generic.DetailView):
@@ -40,8 +43,10 @@ class TakeQuiz(generic.DetailView):
 #        import ipdb; ipdb.set_trace()
 #        return None
 
+
 def continue_quiz(request):
     return take_quiz(request, request.session['current_quiz'])
+
 
 def take_quiz(request, pk):
     print 'take_quiz', pk
@@ -72,7 +77,7 @@ def take_quiz(request, pk):
     elif 'next' in request.POST:
         if not save_answers_for_page(page, request):
             all_questions_answered = False
-            current_page =  page
+            current_page = page
         else:
             next_page = page.next()
             if next_page:
@@ -84,24 +89,24 @@ def take_quiz(request, pk):
             all_questions_answered = False
             current_page = page
         else:
-            return eval(quiz,request.session.get('answers',{}),request)
+            return eval(quiz, request.session.get('answers', {}), request)
     else:
         current_page = page
-    request.session['current_page'] = current_page.id;
+    request.session['current_page'] = current_page.id
 
-    #import ipdb; ipdb.set_trace();
-    print 'answers', request.session.get('answers',{})
+    print 'answers', request.session.get('answers', {})
     print 'pages', current_page, current_page.previous(), current_page.next()
     context = {
-        'quiz' : quiz,
-        'questions' : prepare_for_render(current_page, request.session.get('answers',{}).
-                                         get(str(current_page.id),{})),
-        'pageNumber' : current_page.sequence_number,
-        'not_all_questions_answered' : not all_questions_answered,
-        'has_previous_page' : not not current_page.previous(),
-        'has_next_page' : not not current_page.next()
+        'quiz': quiz,
+        'questions': prepare_for_render(current_page, request.session.get('answers', {}).
+                                        get(str(current_page.id), {})),
+        'pageNumber': current_page.sequence_number,
+        'not_all_questions_answered': not all_questions_answered,
+        'has_previous_page': not not current_page.previous(),
+        'has_next_page': not not current_page.next()
         }
     return render_to_response('quizes/takeQuiz.html', context, RequestContext(request))
+
 
 def eval(quiz, answers, request):
     clear_quiz_status(request)
@@ -109,7 +114,7 @@ def eval(quiz, answers, request):
     deteriorations = []
     total_score = 0
     for page in quiz.page_set.all():
-        page_answers = answers.get(str(page.id),{})
+        page_answers = answers.get(str(page.id), {})
         page_improvement = None
         page_deterioration = None
         for question in page.question_set.all():
@@ -117,29 +122,30 @@ def eval(quiz, answers, request):
             print question.text, score, improve, deteriorate
             total_score += score
             if improve and (not page_improvement or page_improvement[0][0] < improve[0]):
-                page_improvement = (improve,question)
+                page_improvement = (improve, question)
             if deteriorate and (not page_deterioration or page_deterioration[0][0] > deteriorate[0]):
-                page_deterioration = (deteriorate,question)
+                page_deterioration = (deteriorate, question)
         if page_improvement:
-            improvements.append((page_improvement[0][1],page_improvement[1]))
+            improvements.append((page_improvement[0][1], page_improvement[1]))
         if page_deterioration:
-            deteriorations.append((page_deterioration[0][1],page_deterioration[1]))
+            deteriorations.append((page_deterioration[0][1], page_deterioration[1]))
     res = Result()
     res.quiz = quiz
     res.score = total_score
     res.save()
     context = {
-        'quiz' : quiz,
-        'score' : total_score,
-        'improvements' : improvements,
-        'deteriorations' : deteriorations
+        'quiz': quiz,
+        'score': total_score,
+        'improvements': improvements,
+        'deteriorations': deteriorations
         }
     return render_to_response('quizes/results.html', context, RequestContext(request))
+
 
 def save_answers_for_page(page, request):
     if 'answers' not in request.session:
         request.session = {}
-    page_answers = request.session['answers'].get(str(page.id),{})
+    page_answers = request.session['answers'].get(str(page.id), {})
     missing_answer = False
     for question in page.question_set.all():
         if question.type == 'Basic':
@@ -157,13 +163,14 @@ def save_answers_for_page(page, request):
     request.session.modified = True
     return not missing_answer
 
+
 def prepare_for_render(page, answers):
     questions = []
-    print 'prepare',page.id,answers
+    print 'prepare', page.id, answers
     for question in page.question_set.all():
         choices = []
         isMultiChoice = question.type == 'Multiple'
-        selected_choices = answers.get(str(question.id),{})
+        selected_choices = answers.get(str(question.id), {})
         for choice in question.choice_set.all():
             print choice.id, selected_choices
             choices.append([choice.text, choice.id,
@@ -173,17 +180,19 @@ def prepare_for_render(page, answers):
     print questions
     return questions
 
+
 def start_new_quiz(request):
     clear_quiz_status(request)
     return index_view(request)
+
 
 def clear_quiz_status(request):
     del request.session['current_quiz']
     del request.session['current_page']
     del request.session['answers']
 
+
 def get_not_null(obj):
     if not obj:
         raise Http404('Could not find object')
     return obj
-
