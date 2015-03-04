@@ -55,6 +55,7 @@ def take_quiz(request, pk):
 
     quiz = get_object_or_404(Quiz, pk=pk)
     request.session['current_quiz'] = quiz.id
+    all_questions_answered = True
     if page_id:
         page = get_not_null(quiz.page_set.get(pk=page_id))
     else:
@@ -69,16 +70,21 @@ def take_quiz(request, pk):
         else:
             current_page = page
     elif 'next' in request.POST:
-        save_answers_for_page(page, request)
-        next_page = page.next()
-        if next_page:
-            current_page = next_page
+        if not save_answers_for_page(page, request):
+            all_questions_answered = False
+            current_page =  page
         else:
-            current_page = page
+            next_page = page.next()
+            if next_page:
+                current_page = next_page
+            else:
+                current_page = page
     elif 'finish' in request.POST:
-        #TODO : implement finish
-        # import ipdb; ipdb.set_trace()
-        return start_new_quiz(request);
+        if not save_answers_for_page(page, request):
+            all_questions_answered = False
+            current_page = page
+        else:
+            return eval(quiz,request.session.get('answers',{}),request)
     else:
         current_page = page
     request.session['current_page'] = current_page.id;
@@ -91,29 +97,43 @@ def take_quiz(request, pk):
         'questions' : prepare_for_render(current_page, request.session.get('answers',{}).
                                          get(str(current_page.id),{})),
         'pageNumber' : current_page.sequence_number,
-        'not_all_questions_answered' : False,
+        'not_all_questions_answered' : not all_questions_answered,
         'has_previous_page' : not not current_page.previous(),
         'has_next_page' : not not current_page.next()
         }
     return render_to_response('quizes/takeQuiz.html', context, RequestContext(request))
 
+def eval(quiz, answers, request):
+    clear_quiz_status(request)
+    context = {
+        'quiz' : quiz,
+        'score' : 0,
+        'avg_score' : 0,
+        'improvements' : [],
+        'deteriorations' : []
+        }
+    return render_to_response('quizes/results.html', context, RequestContext(request))
+
 def save_answers_for_page(page, request):
     if 'answers' not in request.session:
         request.session = {}
     page_answers = request.session['answers'].get(str(page.id),{})
+    missing_answer = False
     for question in page.question_set.all():
         if question.type == 'Basic':
             if str(question.id) in request.POST:
                 page_answers[str(question.id)] = [int(request.POST.get(str(question.id)))]
             else:
                 page_answers[str(question.id)] = []
+                missing_answer = True
         else:
             prefix = str(question.id) + 'c'
-            page_answers[str(question.id)] = [int(key[len(prefix):])
-                                         for key in request.POST.keys() if key.startswith(prefix)]
+            tmp = [int(key[len(prefix):]) for key in request.POST.keys() if key.startswith(prefix)]
+            page_answers[str(question.id)] = tmp
+            missing_answer = missing_answer or not tmp
     request.session['answers'][str(page.id)] = page_answers
     request.session.modified = True
-    print page_answers
+    return not missing_answer
 
 def prepare_for_render(page, answers):
     questions = []
@@ -132,10 +152,13 @@ def prepare_for_render(page, answers):
     return questions
 
 def start_new_quiz(request):
+    clear_quiz_status(request)
+    return index_view(request)
+
+def clear_quiz_status(request):
     del request.session['current_quiz']
     del request.session['current_page']
     del request.session['answers']
-    return index_view(request)
 
 def get_not_null(obj):
     if not obj:

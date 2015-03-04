@@ -1,0 +1,23 @@
+Quiz {{ quiz.name }} Results<br><br>
+
+Your result was: {{ score }}
+<br><br>
+The average score is: {{ avg_score }}
+<br><br>
+
+{% if improvements %}
+To improve you score you can answer differently to this questions:
+   {% for page in improvements %}
+     {{ page }}
+   {% endfor %}
+{% endif %}
+<br><br>
+{% if deteriorations %}
+To deteriorate you score you can answer differently to this questions:
+   {% for page in deteriorations %}
+     {{ page }}
+   {% endfor %}
+{% endif %}
+<br><br>
+
+<a href="{% url 'home' %}"> Go back to quizes </a>
