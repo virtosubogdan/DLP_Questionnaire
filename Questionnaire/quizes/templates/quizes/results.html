@@ -2,21 +2,34 @@ Quiz {{ quiz.name }} Results<br><br>
 
 Your result was: {{ score }}
 <br><br>
-The average score is: {{ avg_score }}
+The average score is: {{ quiz.average_score }}
 <br><br>
 
 {% if improvements %}
-To improve you score you can answer differently to this questions:
-   {% for page in improvements %}
-     {{ page }}
+To improve you score you can answer differently to this questions:<br>
+   {% for improv,question in improvements %}
+     Question {{ question.id }} : {{ question.text }}<br>
+     {% for choice in question.choice_set.all %}
+     	{% if choice.id in improv %}
+	   {{ choice.text }} <br>
+	{% endif %}
+     {% endfor %}
+     <br>
    {% endfor %}
+   <br>
 {% endif %}
 <br><br>
 {% if deteriorations %}
-To deteriorate you score you can answer differently to this questions:
-   {% for page in deteriorations %}
-     {{ page }}
+To deteriorate you score you can answer differently to this questions:<br>
+   {% for det,question in deteriorations %}
+     Question {{ question.id }} : {{ question.text }}<br>
+     {% for choice in question.choice_set.all %}
+     	{% if choice.id in det %}
+	   {{ choice.text }} <br>
+	{% endif %}
+     {% endfor %}
    {% endfor %}
+   <br><br>
 {% endif %}
 <br><br>
 

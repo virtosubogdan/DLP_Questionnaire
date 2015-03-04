@@ -5,7 +5,7 @@ from django.template import RequestContext
 from django.shortcuts import render_to_response, get_object_or_404
 from itertools import ifilter
 
-from quizes.models import Quiz
+from quizes.models import Quiz, Result
 
 S_QUIZ_ID = 'current_quiz'
 S_PAGE_ID = 'current_page'
@@ -105,12 +105,34 @@ def take_quiz(request, pk):
 
 def eval(quiz, answers, request):
     clear_quiz_status(request)
+    improvements = []
+    deteriorations = []
+    total_score = 0
+    for page in quiz.page_set.all():
+        page_answers = answers.get(str(page.id),{})
+        page_improvement = None
+        page_deterioration = None
+        for question in page.question_set.all():
+            score, improve, deteriorate = question.evaluate(page_answers.get(str(question.id)))
+            print question.text, score, improve, deteriorate
+            total_score += score
+            if improve and (not page_improvement or page_improvement[0][0] < improve[0]):
+                page_improvement = (improve,question)
+            if deteriorate and (not page_deterioration or page_deterioration[0][0] > deteriorate[0]):
+                page_deterioration = (deteriorate,question)
+        if page_improvement:
+            improvements.append((page_improvement[0][1],page_improvement[1]))
+        if page_deterioration:
+            deteriorations.append((page_deterioration[0][1],page_deterioration[1]))
+    res = Result()
+    res.quiz = quiz
+    res.score = total_score
+    res.save()
     context = {
         'quiz' : quiz,
-        'score' : 0,
-        'avg_score' : 0,
-        'improvements' : [],
-        'deteriorations' : []
+        'score' : total_score,
+        'improvements' : improvements,
+        'deteriorations' : deteriorations
         }
     return render_to_response('quizes/results.html', context, RequestContext(request))
 

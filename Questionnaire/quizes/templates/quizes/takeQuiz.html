@@ -12,7 +12,7 @@ Quiz: {{ quiz.name }} <br><br>
       {% for choice in question.2 %}
          <input type="radio" name="{{ choice.2 }}" value="{{ choice.1 }}"
 	 {% if choice.3 %} checked {% endif %}
-	 />{{ choice.0 }} {{ choice.3 }}<br>
+	 />{{ choice.0 }}<br>
       {% endfor %}
       </li>
       <br>
