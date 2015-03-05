@@ -4,20 +4,9 @@ Quiz: {{ quiz.name }} <br><br>
 
 <form action="{% url 'takeQuiz' quiz.id %}" method="post" >
 {% csrf_token %}
-{% if questions %}
-   <ul>
-   {% for question in questions %}
-      <li>Question {{ question.0 }}: {{ question.1 }}
-      <br>
-      {% for choice in question.2 %}
-         <input type="radio" name="{{ choice.2 }}" value="{{ choice.1 }}"
-	 {% if choice.3 %} checked {% endif %}
-	 />{{ choice.0 }}<br>
-      {% endfor %}
-      </li>
-      <br>
-   {% endfor %}
-   </ul>
+{% if formset %}
+   {{ formset.as_p }}
+   <br>
 {% else %}
    <p> There are no questions on this page </p>
 {% endif %}

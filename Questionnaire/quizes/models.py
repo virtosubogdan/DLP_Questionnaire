@@ -49,6 +49,16 @@ class Page(models.Model):
             return None
         return prev_list[0]
 
+    def make_answers(self, session):
+        answers = Answer.objects.filter(session=session, question__page=self)
+        if not answers:
+            for question in self.question_set.all():
+                print 'question', question
+                new_answer = Answer()
+                new_answer.session = session
+                new_answer.question = question
+                new_answer.save()
+
 
 # TODO may need order
 class Question(models.Model):
@@ -60,14 +70,47 @@ class Question(models.Model):
     def __str__(self):
         return "Question " + str(self.id)
 
-    def evaluate(self, answers):
-        is_simple = self.type == 'Basic'
+
+class Choice(models.Model):
+    question = models.ForeignKey(Question)
+    text = models.CharField(max_length=200)
+    value = models.IntegerField(default=0)
+
+    def __str__(self):
+        return self.text
+
+
+class Result(models.Model):
+    quiz = models.ForeignKey(Quiz)
+    score = models.IntegerField(default=0)
+
+    def __str__(self):
+        return "Result " + str(self.id) + " Score:" + str(self.score)
+
+
+class Session(models.Model):
+    sid = models.CharField(max_length=200, primary_key = True)
+    creation_date = models.DateField(auto_now_add=True)
+
+    def __str__(self):
+        return "Session " + self.sid
+
+
+class Answer(models.Model):
+    session = models.ForeignKey(Session)
+    question = models.ForeignKey(Question)
+
+    def __str__(self):
+        return "Answer " + str(self.id)
+
+    def evaluate(self):
+        is_simple = self.question.type == 'Basic'
         score = 0
         improve = (None, [])
         deteriorate = (None, [])
-        for choice in self.choice_set.all():
-            print 'choice', choice.id
-            if choice.id in answers:
+        selected_choices = self.get_selected_choices()
+        for choice in self.question.choice_set.all():
+            if choice in selected_choices:
                 score += choice.value
             if is_simple:
                 if improve[0] is None or choice.value > improve[0]:
@@ -76,7 +119,6 @@ class Question(models.Model):
                     deteriorate = (choice.value, [choice.id])
             else:
                 improve = self.__improve_multi(improve, choice)
-                print 'improved', improve
                 deteriorate = self.__deteriorate_multi(deteriorate, choice)
         if improve[0] is None or improve[0] == score:
             improve = None
@@ -97,7 +139,6 @@ class Question(models.Model):
             return deteriorate
 
     def __improve_multi(self, improve, choice):
-        print 'im', improve
         if choice.value > 0:
             if improve[0] is None or improve[0] == 0:
                 return (choice.value, [choice.id])
@@ -109,19 +150,13 @@ class Question(models.Model):
         else:
             return improve
 
-
-class Choice(models.Model):
-    question = models.ForeignKey(Question)
-    text = models.CharField(max_length=200)
-    value = models.IntegerField(default=0)
-
-    def __str__(self):
-        return "Choice "+self.text
+    def get_selected_choices(self):
+        return [a_s.choice for a_s in self.answerselection_set.all()]
 
 
-class Result(models.Model):
-    quiz = models.ForeignKey(Quiz)
-    score = models.IntegerField(default=0)
+class AnswerSelection(models.Model):
+    answer = models.ForeignKey(Answer)
+    choice = models.ForeignKey(Choice)
 
     def __str__(self):
-        return "Result " + str(self.id) + " Score:" + str(self.score)
+        return "Answer selection" + str(self.id)
