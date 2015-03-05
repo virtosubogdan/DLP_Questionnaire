@@ -88,7 +88,7 @@ class Result(models.Model):
 
 
 class Session(models.Model):
-    sid = models.CharField(max_length=200, primary_key = True)
+    sid = models.CharField(max_length=200, primary_key=True)
     creation_date = models.DateField(auto_now_add=True)
 
     def __str__(self):

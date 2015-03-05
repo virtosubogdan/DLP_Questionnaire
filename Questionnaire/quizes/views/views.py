@@ -15,6 +15,7 @@ S_PAGE_ID = 'current_page'
 DEFAULT_QUIZ_ID = 1
 DEFAULT_PAGE_ID = 1
 
+
 class IndexView(generic.ListView):
     template_name = 'quizes/index.html'
     context_object_name = 'quizes'
@@ -30,6 +31,7 @@ def index_view(request, error=None):
     }
     return render_to_response('quizes/index.html', context, RequestContext(request))
 
+
 def delete_current_answers(request):
     clear_quiz_status(request)
     try:
@@ -42,14 +44,16 @@ def delete_current_answers(request):
 def continue_quiz(request):
     return take_quiz(request, request.session['current_quiz'])
 
+
 def get_or_make_session(request):
     try:
-       return Session.objects.get(sid=request.session.session_key)
+        return Session.objects.get(sid=request.session.session_key)
     except Session.DoesNotExist:
         session = Session()
         session.sid = request.session.session_key
         session.save()
         return session
+
 
 def take_quiz(request, pk):
     session = get_or_make_session(request)
@@ -96,7 +100,7 @@ def take_quiz(request, pk):
     request.session['current_page'] = current_page.id
 
     current_page.make_answers(session)
-    formset = AnswerModelFormSet(queryset = Answer.objects.filter(
+    formset = AnswerModelFormSet(queryset=Answer.objects.filter(
         session=session, question__page=current_page))
     context = {
         'quiz': quiz,
@@ -185,8 +189,10 @@ def get_not_null(obj):
         raise Http404('Could not find object')
     return obj
 
+
 def new_take_quiz(request, pk):
     return render(request, 'quizes/newTakeQuiz.html', {'form': None})
+
 
 def delete_old_sessions(request):
     clear_quiz_status(request)

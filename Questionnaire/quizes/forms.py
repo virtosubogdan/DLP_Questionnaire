@@ -17,13 +17,13 @@ class AnswerModelForm(forms.ModelForm):
         if question.type == 'Basic':
             field = forms.ModelChoiceField(
                 required=True, widget=forms.RadioSelect, empty_label=None,
-                queryset = Choice.objects.filter(question=question))
+                queryset=Choice.objects.filter(question=question))
             if len(selected_choices) == 1:
                 field.initial = selected_choices[0].id
         else:
             field = forms.ModelMultipleChoiceField(
                 required=True, widget=forms.CheckboxSelectMultiple,
-                queryset = Choice.objects.filter(question=question))
+                queryset=Choice.objects.filter(question=question))
             field.initial = [s_c.id for s_c in selected_choices]
 
         self.fields['choices'] = field
