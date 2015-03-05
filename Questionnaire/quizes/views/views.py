@@ -4,6 +4,7 @@ from django.views import generic
 from django.template import RequestContext
 from django.shortcuts import render_to_response, get_object_or_404
 from itertools import ifilter
+from datetime import date
 
 from quizes.models import Quiz, Result, Question, Session, Answer, AnswerSelection
 from quizes.forms import AnswerModelFormSet
@@ -89,7 +90,7 @@ def take_quiz(request, pk):
             all_questions_answered = False
             current_page = page
         else:
-            return eval(quiz, request)
+            return eval(quiz, request, session)
     else:
         current_page = page
     request.session['current_page'] = current_page.id
@@ -108,7 +109,7 @@ def take_quiz(request, pk):
     return render_to_response('quizes/takeQuiz.html', context, RequestContext(request))
 
 
-def eval(quiz, request):
+def eval(quiz, request, session):
     clear_quiz_status(request)
     improvements = []
     deteriorations = []
@@ -132,6 +133,7 @@ def eval(quiz, request):
     res.quiz = quiz
     res.score = total_score
     res.save()
+    session.delete()
     context = {
         'quiz': quiz,
         'score': total_score,
@@ -186,3 +188,7 @@ def get_not_null(obj):
 def new_take_quiz(request, pk):
     return render(request, 'quizes/newTakeQuiz.html', {'form': None})
 
+def delete_old_sessions(request):
+    clear_quiz_status(request)
+    Session.objects.filter(creation_date__lte=date.today()).delete()
+    return index_view(request)

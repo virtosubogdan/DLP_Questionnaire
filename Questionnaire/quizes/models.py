@@ -53,7 +53,6 @@ class Page(models.Model):
         answers = Answer.objects.filter(session=session, question__page=self)
         if not answers:
             for question in self.question_set.all():
-                print 'question', question
                 new_answer = Answer()
                 new_answer.session = session
                 new_answer.question = question

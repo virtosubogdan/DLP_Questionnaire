@@ -14,6 +14,7 @@ urlpatterns = patterns(
     url(r'^startNewQuiz$', views.start_new_quiz, name='startNewQuiz'),
     url(r'^continueQuiz$', views.continue_quiz, name='continueQuiz'),
     url(r'^deleteAnswers$', views.delete_current_answers, name='deleteAnswers'),
+    url(r'^deleteOldSessions$', views.delete_old_sessions, name='deleteOldSessions'),
     # url(r'^blog/', include('blog.urls')),
     url(r'^error404$', errors.server_error_404, name='error404'),
 
